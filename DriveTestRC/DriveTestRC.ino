@@ -8,18 +8,15 @@ TODO
 ------
 - Add calibration button (someday/maybe)
 - Possible velocity smoothing or attenuation (someday/maybe, trim on controller works for the moment)
-- Directions are reversed in the mapping for moving turns (Revesed mapped axes, needs testing, 2015-04-18 15:40:09)
 - When moving at full throttle, the inside wheel on a turn buries to zero velocity despite a very light turn input on the controller
-- Narrow the velocity range for sit and spin (Reduced IDLE_MAX from 80 to 60, test for suitability, 2015-04-18 15:47:02)
-- Calibration mode exits early (~5 seconds) on Max32 platform
-- Upon leaving calibration mode, the robot goes into full spin in one direction. We've contacted Digilent for support (2015-04-23 19:55:00)
+- Code compiles for Intel Edison. Test in vivo (2016-2-20)
 
 Pins;
-0 - 
-1 - 
+0 -
+1 -
 2 - THROTTLE_IN
 3 - STEERING_IN
-4 - 
+4 -
 5 - L_DIR_P
 6 - L_INHIBIT_P
 7 - R_DIR_P
@@ -27,7 +24,7 @@ Pins;
 9 - PROGRAM_PIN (future)
 10 - L_PWM_P
 11 - R_PWM_P
-12 - 
+12 -
 13 -
 
 */
@@ -97,7 +94,7 @@ uint8_t gOldDirection = DIRECTION_STOP;
 #define MODE_PROGRAM 1
 
 uint8_t gMode;
-uint32_t ulProgramModeExitTime; 
+uint32_t ulProgramModeExitTime;
 
 /* Auto-calibration
 // Index into the EEPROM Storage assuming a 0 based array of uint16_t
@@ -131,7 +128,7 @@ void setup()
 // Set Inhibit pins static low
   digitalWrite(LEFT_INHIBIT,LOW);
   digitalWrite(RIGHT_INHIBIT,LOW);
-  
+
   // readSettingsFromEEPROM(); Auto-calibration for the moment
   ulProgramModeExitTime = millis() + 10000;
   gMode = MODE_PROGRAM;
@@ -158,22 +155,22 @@ void loop()
     {
       unSteeringIn = unSteeringInShared;
     }
-    
+
     bUpdateFlagsShared = 0;
 
     interrupts();
   }
-  
+
   // Calibration mode, automatically entered on boot
   if(gMode == MODE_PROGRAM)
-  {    
+  {
     unThrottleCenter = unThrottleIn;
     unSteeringCenter = unSteeringIn;
-    
+
     gDirection = DIRECTION_STOP;
-    
+
     delay(20);
-    
+
    if(ulProgramModeExitTime < millis())
    {
      ulProgramModeExitTime = 0;
@@ -190,7 +187,7 @@ void loop()
      {
        unThrottleMin = unThrottleIn;
      }
-     
+
      if(unSteeringIn > unSteeringMax && unSteeringIn <= RC_MAX)
      {
        unSteeringMax = unSteeringIn;
@@ -201,13 +198,13 @@ void loop()
      }
    }
   }
-  
+
   if(gMode == MODE_RUN)
   {
     if(bUpdateFlags & THROTTLE_FLAG)
     {
       unThrottleIn = constrain(unThrottleIn,unThrottleMin,unThrottleMax);
-      
+
       if(unThrottleIn > unThrottleCenter)
       {
         gThrottle = map(unThrottleIn,unThrottleCenter,unThrottleMax,PWM_MIN,PWM_MAX);
@@ -218,7 +215,7 @@ void loop()
         gThrottle = map(unThrottleIn,unThrottleMin,unThrottleCenter,PWM_MAX,PWM_MIN);
         gThrottleDirection = DIRECTION_REVERSE;
       }
-  
+
       if(gThrottle < IDLE_MAX)
       {
         gGear = GEAR_IDLE;
@@ -228,19 +225,19 @@ void loop()
         gGear = GEAR_FULL;
       }
     }
-  
+
     if(bUpdateFlags & STEERING_FLAG)
     {
       uint8_t throttleLeft = gThrottle;
       uint8_t throttleRight = gThrottle;
-  
+
       gDirection = gThrottleDirection;
-      
+
       unSteeringIn = constrain(unSteeringIn,unSteeringMin,unSteeringMax);
-  
+
       switch(gGear)
       {
-        
+
       case GEAR_IDLE: // Idle causes the robot to sit in place and spin
         if(unSteeringIn > (unSteeringCenter + RC_DEADBAND))
         {
@@ -253,7 +250,7 @@ void loop()
           throttleRight = throttleLeft = map(unSteeringIn,unSteeringMin,unSteeringCenter,PWM_MAX,PWM_MIN);
         }
         break;
-      
+
       case GEAR_FULL: // If not idle proportionally restrain inside track to turn vehicle around it
         if(unSteeringIn < (unSteeringCenter - RC_DEADBAND))
         {
@@ -269,7 +266,7 @@ void loop()
       analogWrite(PWM_SPEED_RIGHT,throttleRight);
     }
   }
-  
+
   if((gDirection != gOldDirection) || (gGear != gOldGear))
   {
     gOldDirection = gDirection;
@@ -341,7 +338,7 @@ This section of code is irrelevant until we move away from auto-calibration.
 // Not currently used, auto-calibration
 void readSettingsFromEEPROM()
 {
-  unSteeringMin = readChannelSetting(EEPROM_INDEX_STEERING_MIN);
+  unSteeringMin = readChannelSook up how to change the color of for example variable type declarations?etting(EEPROM_INDEX_STEERING_MIN);
   if(unSteeringMin < RC_MIN || unSteeringMin > RC_NEUTRAL)
   {
     unSteeringMin = RC_MIN;
@@ -354,7 +351,7 @@ void readSettingsFromEEPROM()
     unSteeringMax = RC_MAX;
   }
   Serial.println(unSteeringMax);
-  
+
   unSteeringCenter = readChannelSetting(EEPROM_INDEX_STEERING_CENTER);
   if(unSteeringCenter < unSteeringMin || unSteeringCenter > unSteeringMax)
   {
@@ -362,7 +359,7 @@ void readSettingsFromEEPROM()
   }
   Serial.println(unSteeringCenter);
 
-  unThrottleMin = readChannelSetting(EEPROM_INDEX_THROTTLE_MIN);
+  unThrottleMin = readChannelSook up how to change the color of for example variable type declarations?etting(EEPROM_INDEX_THROTTLE_MIN);
   if(unThrottleMin < RC_MIN || unThrottleMin > RC_NEUTRAL)
   {
     unThrottleMin = RC_MIN;
@@ -375,7 +372,7 @@ void readSettingsFromEEPROM()
     unThrottleMax = RC_MAX;
   }
   Serial.println(unThrottleMax);
-  
+
   unThrottleCenter = readChannelSetting(EEPROM_INDEX_THROTTLE_CENTER);
   if(unThrottleCenter < unThrottleMin || unThrottleCenter > unThrottleMax)
   {
@@ -393,7 +390,7 @@ void writeSettingsToEEPROM()
   writeChannelSetting(EEPROM_INDEX_THROTTLE_MIN,unThrottleMin);
   writeChannelSetting(EEPROM_INDEX_THROTTLE_MAX,unThrottleMax);
   writeChannelSetting(EEPROM_INDEX_THROTTLE_CENTER,unThrottleCenter);
-            
+
   Serial.println(unSteeringMin);
   Serial.println(unSteeringMax);
   Serial.println(unSteeringCenter);
